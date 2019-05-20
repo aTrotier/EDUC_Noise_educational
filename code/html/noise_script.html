@@ -1,0 +1,640 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>noise_script</title><meta name="generator" content="MATLAB 9.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-05-20"><meta name="DC.source" content="noise_script.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1></h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Observe noise distributioin in one channel</a></li><li><a href="#8">Theoritical distribution of magnitude noise</a></li><li><a href="#21">Properties of Rayleigh distribution</a></li><li><a href="#24">Simulate the rician distribution</a></li><li><a href="#25">Noise distribution with multiple elements array coil</a></li><li><a href="#28">Properties of the non-central chi distribution</a></li><li><a href="#37">How to measure SNR (ROI method)</a></li><li><a href="#40">Conclusion</a></li></ul></div><h2>Observe noise distributioin in one channel<a name="1"></a></h2><p>Noise Data has been acquired on a phantom (RF off, ADC ON)</p><p>Size of the noise dataset is : 16384 x 4 coils</p><p>Data are separated in real, imaginary and magnitude.</p><pre class="codeinput">close <span class="string">all</span>;clear <span class="string">all</span>;
+load(<span class="string">'../data/noise_data.mat'</span>);
+
+noise_r=real(noise);
+noise_i=imag(noise);
+noise_m=abs(noise);
+</pre><p>Distribution (histogram) of real/imaginary part of noise is fitted using builtin matlab function : fitdist() and assuming it is a normal distribution :</p><p><img src="noise_script_eq17830538320113061796.png" alt="$f(x) = \frac{1}{\sigma_g \sqrt{2 \pi}} e^{-\frac{1}{2}(\frac{x-\mu}{\sigma_g})^2}$" style="width:100px;height:20px;"></p><pre class="codeinput">LimMin=max(noise_r(:,1));  <span class="comment">% limit the range of the plot</span>
+
+<span class="comment">% Plot the distribution of noise real part.</span>
+figure;h1=histogram(noise_r(:,1),50);title(<span class="string">'real part of noise'</span>);
+xlim([-LimMin LimMin])
+
+<span class="comment">% Estimate the standard deviation of noise (assuming it is a</span>
+<span class="comment">% gaussian/normal distribution)</span>
+pd_r = fitdist(noise_r(:,1),<span class="string">'Normal'</span>);
+
+<span class="comment">% Plot the fitted distribution and visualy compare.</span>
+
+x_values = pd_r.mu-4*pd_r.sigma:8*pd_r.sigma/1000:pd_r.mu+4*pd_r.sigma;
+<span class="comment">%y = pdf(pd,x_values); % integrated matlab function to create a normal distribution</span>
+y=1/(pd_r.sigma*sqrt(2*pi))*exp(-1/2*((x_values-pd_r.mu)/pd_r.sigma).^2); <span class="comment">% own implementation of normal distribution</span>
+y=y/max(y); y=y*max(h1.Values);
+hold <span class="string">on</span>;
+plot(x_values,y,<span class="string">'LineWidth'</span>,2)
+</pre><img vspace="5" hspace="5" src="noise_script_01.png" style="width:560px;height:420px;" alt=""> <p>Real part of the complex data seems to follow a gaussian distribution with a standard deviation <img src="noise_script_eq12708923657795990387.png" alt="$\sigma_g$" style="width:10px;height:8px;"></p><pre class="codeinput"> fprintf(1,<span class="string">'Standard deviation of real part: %f\n'</span>,pd_r.sigma);
+</pre><pre class="codeoutput">Standard deviation of real part: 13740.745065
+</pre><p><b>Same observation for imaginary part</b></p><pre class="codeinput">figure;h2=histogram(noise_i(:,1),50);title(<span class="string">'imaginary part of noise'</span>);
+xlim([-LimMin LimMin]);
+
+pd_i = fitdist(noise_i(:,1),<span class="string">'Normal'</span>);
+x_values = pd_i.mu-4*pd_i.sigma:8*pd_i.sigma/1000:pd_i.mu+4*pd_i.sigma;
+y=1/(pd_i.sigma*sqrt(2*pi))*exp(-1/2*((x_values-pd_i.mu)/pd_i.sigma).^2);
+
+y=y/max(y); y=y*max(h2.Values);
+hold <span class="string">on</span>
+plot(x_values,y,<span class="string">'LineWidth'</span>,2)
+</pre><p>Imaginary part of the complex data also seems to follow a gaussian distribution with a standard deviation <img src="noise_script_eq12708923657795990387.png" alt="$\sigma_g$" style="width:10px;height:8px;"> which the "same" as the one measure on real part of noise</p><pre class="codeinput"> fprintf(1,<span class="string">'Standard deviation of imaginary part: %f\n'</span>,pd_i.sigma);
+</pre><pre class="codeoutput">Standard deviation of imaginary part: 13659.701548
+</pre><img vspace="5" hspace="5" src="noise_script_02.png" style="width:560px;height:420px;" alt=""> <p>But what happens to the distribution for the magnitude noise ?</p><pre class="codeinput">figure;h3=histogram(noise_m,50);title(<span class="string">'Magnitude noise'</span>);
+xlim([-LimMin LimMin]);
+</pre><img vspace="5" hspace="5" src="noise_script_03.png" style="width:560px;height:420px;" alt=""> <p>The distribution is <b>not anymore gaussian</b></p><h2>Theoritical distribution of magnitude noise<a name="8"></a></h2><p>This is not a gaussian distribution indeed it is a Rayleigh distribution when a coil with <b>one channel</b> is used : <img src="noise_script_eq10993445190522608274.png" alt="$f(x)=\frac{x}{\sigma_{g}^2}\exp{\Big(-\frac{x^2}{2 \sigma_{g}^2} \Big)}$" style="width:106px;height:20px;"></p><p>Mathematical description :? <a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/cmr.a.20124">Cardenas Blanco et Al</a></p><p>Ideal magnitude signal / pixel intensity is : <img src="noise_script_eq05382411559493853801.png" alt="$\| \vec{I} \| = \sqrt{I_{Re}^2+I_{Im}^2}$" style="width:86px;height:15px;"></p><p><img vspace="5" hspace="5" src="image/Rayleigh_1.png" alt=""> </p><p>With noise we add and incertitude of the position into the complex plan : <img src="noise_script_eq08404835540268648331.png" alt="$\| \vec{I_n} \| = \sqrt{(I_{Re}+n_r)^2+(I_{Im}+n_i)^2}$" style="width:164px;height:15px;"></p><p><img vspace="5" hspace="5" src="image/Rayleigh_2.png" alt=""> </p><p>Distribution of signal is equal to the probability of occurence of an intensity value at a distance <img src="noise_script_eq09206707374354673369.png" alt="$\| \vec{I} \| + \delta I$" style="width:40px;height:14px;"></p><p><img vspace="5" hspace="5" src="image/Rayleigh_3.png" alt=""> </p><p>If the Signal-to-Noise Ratio is $ +\infty$, curvature is negligeable and the integral of the function (the distribution) in function of the Intensity of the signal <img src="noise_script_eq12938048354002904275.png" alt="$\| \vec{I} \|$" style="width:14px;height:14px;"> is a gaussian</p><p><img vspace="5" hspace="5" src="image/Rayleigh_4.png" alt=""> </p><p>When <img src="noise_script_eq12938048354002904275.png" alt="$\| \vec{I} \|$" style="width:14px;height:14px;"> decrease, the curvature will modify this gaussian distribution.</p><p><img vspace="5" hspace="5" src="image/Rayleigh_6.png" alt=""> </p><p>The distribution is a Rician distribution :</p><p><img src="noise_script_eq18011862248809300352.png" alt="$P_m(m|A,\sigma_g)=\frac{m}{\sigma_g^2}\exp \Big[-\frac{(A^2+m^2)}{2 \sigma_g^2} \Big]I_0 \Big(\frac{Am}{\sigma_g^2}\Big)H(m)$" style="width:228px;height:20px;"> where <img src="noise_script_eq01728352231255427332.png" alt="$I_n$" style="width:9px;height:10px;"> is the noisy signal measured, <img src="noise_script_eq17419315245227113761.png" alt="$I$" style="width:6px;height:8px;"> is the "real" signal and $I_0(x) is the first order modified Bessel function.</p><p>This distribution can be approximate to a gaussian distribution when <img src="noise_script_eq14996227971946333519.png" alt="$\frac{I}{\sigma_g}$" style="width:8px;height:16px;"> is high :</p><p><img src="noise_script_eq03257640619078638017.png" alt="$P_m(m|A,\sigma_g) \approx \frac{1}{\sigma_g\sqrt{2 \pi}}\exp \Big[-\frac{(m-\sqrt{A^2+\sigma_g^2})^2}{2 \sigma_g^2} \Big]H(m)$" style="width:228px;height:22px;"></p><p>and a Rayleigh distribution when SNR = 0 :</p><p><img src="noise_script_eq04028079826588988767.png" alt="$P_m(m,\sigma_g)=\frac{m}{\sigma^2}\exp \Big[-\frac{m^2}{2 \sigma_g^2} \Big]H(m)$" style="width:160px;height:20px;"></p><p>with :</p><div><ul><li><img src="noise_script_eq11319871188381094158.png" alt="$m$" style="width:10px;height:6px;"> : the magnitude intensity of pixel measured</li><li><img src="noise_script_eq05147331747641807187.png" alt="$A$" style="width:8px;height:8px;"> : the magnitude of the true noiseless pixel signal</li></ul></div><h2>Properties of Rayleigh distribution<a name="21"></a></h2><p><img src="noise_script_eq14151973229559322341.png" alt="$P_m(m,\sigma_g)=\frac{m}{\sigma_g^2}\exp \Big[-\frac{m^2}{2 \sigma_g^2} \Big]H(m)$" style="width:160px;height:20px;"></p><p>Standard deviation of a Rayleigh distribution <img src="noise_script_eq01368896436096290248.png" alt="$\sigma_{Ray}$" style="width:20px;height:8px;"> is linked to the gaussian standard deviation of noise <img src="noise_script_eq12708923657795990387.png" alt="$\sigma_g$" style="width:10px;height:8px;"> on the real/imaginary part of signal :</p><p><img src="noise_script_eq06381737088325757638.png" alt="$\sigma _{Ray} = \sigma_g \sqrt{2-\frac{\pi}{2}}= \sigma_g \times 0.6551$" style="width:152px;height:14px;"></p><p>The mean value of magnitude noise signal is also linked to <img src="noise_script_eq12708923657795990387.png" alt="$\sigma_g$" style="width:10px;height:8px;"> :</p><p><img src="noise_script_eq17359198171845322077.png" alt="$\langle m \rangle _{Ray} = \sigma_g \sqrt{\frac{\pi}{2}} = \sigma_g \times 1.2533$" style="width:145px;height:14px;"></p><p><b>Verification that the magnitude noise follow a Rayleigh distribution</b></p><pre class="codeinput">fprintf(1,<span class="string">'Standard deviation of magnitude part: %f\n'</span>,std(noise_m(:,1)));
+</pre><pre class="codeoutput">Standard deviation of magnitude part: 9021.903598
+</pre><p>The standard deviation on magnitude data are underestimate in comparison to the noise deviation measured on real/imaginary noise.</p><p>We recover the same value of standard deviation of gaussian noise with the previous equation :</p><pre class="codeinput">fprintf(1,<span class="string">'Standard deviation of gaussian noise on real noise: %f\n'</span>,std(noise_r(:,1)));
+fprintf(1,<span class="string">'Standard deviation of gaussian noise on imag noise: %f\n'</span>,std(noise_i(:,1)));
+fprintf(1,<span class="string">'Standard deviation of gaussian noise with mean magnitude noise : %f\n'</span>,mean(noise_m(:,1))/1.2533);
+fprintf(1,<span class="string">'Standard deviation of gaussian noise with standard deviation of magnitude noise : %f\n'</span>,std(noise_m(:,1))/0.6551);
+</pre><pre class="codeoutput">Standard deviation of gaussian noise on real noise: 13740.745065
+Standard deviation of gaussian noise on imag noise: 13659.701548
+Standard deviation of gaussian noise with mean magnitude noise : 13681.336090
+Standard deviation of gaussian noise with standard deviation of magnitude noise : 13771.796059
+</pre><p>We can use the gaussian standard deviation calculated in order to fit the distribution and measure the RMSE</p><pre class="codeinput">pd.sigma = mean(noise_m(:,1))/1.2533;
+
+figure;
+h3=histogram(noise_m,50);title(<span class="string">'Magnitude noise'</span>);
+xlim([-LimMin LimMin]);
+
+x=0:LimMin/1000:LimMin;
+y=x./pd.sigma^2.*exp(-x.^2/(2*pd.sigma^2));
+y=y/max(y); y=y*max(h3.Values);
+hold <span class="string">on</span>
+plot(x,y,<span class="string">'LineWidth'</span>,2)
+</pre><img vspace="5" hspace="5" src="noise_script_04.png" style="width:560px;height:420px;" alt=""> <h2>Simulate the rician distribution<a name="24"></a></h2><p>for multiple value for SNR = [0 1 3 8]</p><pre class="codeinput">SNR= [0 1 3 8];
+
+x_values=0:0.01:1.4;
+<span class="comment">%x_values=-1:0.01:1;</span>
+pd.sigma = 0.1;
+pd.mu=0;
+
+figure;hold <span class="string">on</span>;
+<span class="keyword">for</span> i=1:length(SNR)
+A=SNR(i)*pd.sigma;
+
+yfilt=ones(length(x_values),1);
+yfilt(x_values&lt;0)=0;
+
+y=x_values./((pd.sigma)^2).*exp(-(A^2+x_values.^2)./(2*(pd.sigma)^2)).*besseli(0,A.*x_values/(pd.sigma^2)).*yfilt';
+<span class="comment">%y2=x_values./pd.sigma^2.*exp(-(A^2+x_values.^2)/(2*pd.sigma^2)).*besseli(0,A.*x_values/</span>
+y_gauss=1/(pd.sigma*sqrt(2*pi))*exp(-1/2*((x_values-A)/pd.sigma).^2);
+plot(x_values,y,<span class="string">'LineWidth'</span>,2); <span class="comment">%hold on; plot(x_values,y_gauss);</span>
+
+labels{i} = [<span class="string">'SNR = '</span> num2str(SNR(i))];
+<span class="keyword">end</span>
+legend(labels)
+</pre><img vspace="5" hspace="5" src="noise_script_05.png" style="width:560px;height:420px;" alt=""> <h2>Noise distribution with multiple elements array coil<a name="25"></a></h2><p>Same theoritical analysis can be performed when multiple channel are used either with a sum of square reconstruction or a sense-based coil combinaison reconstruction.</p><p>Mathematical description can be find in <a href="https://onlinelibrary.wiley.com/doi/abs/10.1002/mrm.1910380524">?Constantinides et Al</a></p><p>The noise distribution of L-elements array coil follow a non-central chi distribution in function of the true noiseless signal <img src="noise_script_eq04920737949419497861.png" alt="$A_L$" style="width:13px;height:10px;"> :</p><p>$P_m(m_L,|A_L,\sigma_g)=\frac{A_L}{\sigma_g^2} \Big(\frac{m_L}{A_L}\Big)^L \exp \Big[-\frac{(A_L^2+m_L^2)}{2 \sigma_g^2} \Big]I_{L-1} \Big(\frac{m_L \ A_L}{\sigma_g^2}\Big)H(m_L)%</p><p>with :</p><div><ul><li><img src="noise_script_eq05930667806070692589.png" alt="$I_{L_1}$" style="width:13px;height:11px;"> : modified Bessel function of the first kind of order (L-1)</li><li><img src="noise_script_eq04920737949419497861.png" alt="$A_L$" style="width:13px;height:10px;"> : sum of square of signal</li><li><img src="noise_script_eq11904963258706611165.png" alt="$L$" style="width:7px;height:8px;"> : number of channel</li></ul></div><p>For the case of SNR = 0, we can perform a Taylor expansion of the bessel function :</p><p><img src="noise_script_eq03995917569707736956.png" alt="$I_{L-1} \Big(\frac{m_L \ A_L}{\sigma_g^2}\Big) \approx \frac{1}{2^{(L-1)}(L-1)!}\Big(\frac{m_L \ A_L}{\sigma_g^2}\Big)^{L-1}$" style="width:176px;height:23px;"></p><p>which leads to the noise distribution :</p><p><img src="noise_script_eq00659428348944475312.png" alt="$P_m(m_L,|0,\sigma_g)=\frac{m_L^{2L-1}}{2^{L-1} \ \sigma_g^{2L}\  (L-1)!} \exp \Big[-\frac{m_L^2}{2 \sigma_g^2} \Big]H(m_L)$" style="width:234px;height:21px;"></p><h2>Properties of the non-central chi distribution<a name="28"></a></h2><p>The gaussian standard deviation of noise can be estimated from magnitude images with the following equation :</p><div><ul><li><img src="noise_script_eq14819376620054490951.png" alt="$\langle m_{Mag} \rangle  = \sigma_g \sqrt{\frac{\pi}{2}} \frac{(2 L -1)!!}{2^{L-1}(L-1)!}$" style="width:118px;height:18px;"></li><li><img src="noise_script_eq06902913074341053533.png" alt="$\sigma_{Mag} = \sqrt{2 L \sigma_g^2 -\langle m_{Mag} \rangle ^2}= \sigma_g \sqrt{2L - \frac{\pi}{2} \Big(\frac{(2L-1)!!}{2^{L-1}(L-1)!}\Big)^2}$" style="width:255px;height:27px;"></li></ul></div><p><b>Verification that the magnitude noise follow a non-central chi distribution</b></p><pre class="codeinput">pd.sigma = std(noise_i(:,1));
+LimMin = 100000;
+figure;
+A=0;
+<span class="keyword">for</span> i=1:4
+    dataMagMc=squeeze(sqrt(sum(abs(double(noise_m(:,1:i))).^2,2)));
+    subplot(4,1,i);h1=histogram(dataMagMc,50);title([<span class="string">'noise for '</span> num2str(i) <span class="string">' channels'</span>]);
+    xlim([-LimMin LimMin]);
+
+    x=0:LimMin/1000:LimMin;
+
+    <span class="comment">% Taylor</span>
+    y=(x.^(2*i-1))./(2^(i-1)*pd.sigma^(2*i)*factorial(i-1)).*exp(-(x.^2)./(2*pd.sigma^2));
+    y=y/max(y); y=y*max(h1.Values);
+    hold <span class="string">on</span>
+    plot(x,y,<span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2);
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="noise_script_06.png" style="width:560px;height:420px;" alt=""> <p>Fit is <b>not as good</b> as what we saw with only one channel</p><pre class="codeinput">RMSE = 0;
+clear <span class="string">Idx</span>
+<span class="keyword">for</span> i=1:h1.NumBins
+   <span class="comment">%find center of histogram bin</span>
+   xpos(i)=(h1.BinEdges(i)+h1.BinWidth);
+
+   <span class="comment">% find corresponding x2pos</span>
+   [a,b]=find(x&gt;=xpos(i),1,<span class="string">'first'</span>);
+   <span class="keyword">if</span>(isempty(b))
+        Idx(i)=length(x);
+   <span class="keyword">else</span>
+      Idx(i)=b;
+   <span class="keyword">end</span>
+
+   RMSE =  RMSE+abs(h1.Values(i)-y(Idx(i)))^2;
+<span class="keyword">end</span>
+RMSE=sqrt(RMSE);
+disp([<span class="string">'RMSE = '</span> num2str(RMSE)]);
+</pre><pre class="codeoutput">RMSE = 798.5618
+</pre><p>This is due to the noise correlation between the different channel.</p><p>We can correct that by noise pre-whitening</p><pre class="codeinput">noise=noise';
+
+Nsamples=size(noise,2);
+
+Psi = (1/(Nsamples-1))*(noise * noise');
+figure;imagesc(abs(Psi));title(<span class="string">'noise correlation matrix'</span>);
+</pre><img vspace="5" hspace="5" src="noise_script_07.png" style="width:560px;height:420px;" alt=""> <pre class="codeinput">L=chol(Psi,<span class="string">'lower'</span>);
+L_inv=inv(L);
+
+noise=L_inv*noise;
+
+noise_r_p=real(noise)';
+noise_i_p=imag(noise)';
+noise_m_p=abs(noise)';
+</pre><p><b>Now refit the distribution with noise pre-whitening data</b></p><pre class="codeinput">pd.sigma = std(noise_i_p(:,1));
+LimMin = max(noise_i_p(:));
+figure;
+A=0;
+<span class="keyword">for</span> i=1:4
+    dataMagMc=squeeze(sqrt(sum(abs(double(noise_m_p(:,1:i))).^2,2)));
+    subplot(4,1,i);h1=histogram(dataMagMc,50);title([<span class="string">'noise for '</span> num2str(i) <span class="string">' channels'</span>]);
+    xlim([-LimMin LimMin]);
+
+    x=0:LimMin/1000:LimMin;
+
+    <span class="comment">% Taylor</span>
+    y=(x.^(2*i-1))./(2^(i-1)*pd.sigma^(2*i)*factorial(i-1)).*exp(-(x.^2)./(2*pd.sigma^2));
+    y=y/max(y); y=y*max(h1.Values);
+    hold <span class="string">on</span>
+    plot(x,y,<span class="string">'--'</span>,<span class="string">'LineWidth'</span>,2);
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="noise_script_08.png" style="width:560px;height:420px;" alt=""> <p><b>Now the fit of the noise distribution is really good</b></p><pre class="codeinput">RMSE = 0;
+clear <span class="string">Idx</span>
+<span class="keyword">for</span> i=1:h1.NumBins
+   <span class="comment">%find center of histogram bin</span>
+   xpos(i)=(h1.BinEdges(i)+h1.BinWidth);
+
+   <span class="comment">% find corresponding x2pos</span>
+   [a,b]=find(x&gt;=xpos(i),1,<span class="string">'first'</span>);
+   <span class="keyword">if</span>(isempty(b))
+        Idx(i)=length(x);
+   <span class="keyword">else</span>
+      Idx(i)=b;
+   <span class="keyword">end</span>
+
+   RMSE =  RMSE+abs(h1.Values(i)-y(Idx(i)))^2;
+<span class="keyword">end</span>
+RMSE=sqrt(RMSE);
+disp([<span class="string">'RMSE = '</span> num2str(RMSE)]);
+</pre><pre class="codeoutput">RMSE = 532.3828
+</pre><h2>How to measure SNR (ROI method)<a name="37"></a></h2><p>If you want to measure the SNR with a <b>Region of interest (ROI)</b> based method on magnitude image you should calculate the ratio :</p><p><img src="noise_script_eq09104153660329669762.png" alt="$SNR = \frac{Signal}{\sigma_g}$" style="width:65px;height:17px;"></p><div><ul><li>Correct the noise correlation between channels (noise pre-whitening)</li><li>Take into account the number of coil used</li><li>Measure the signal with a ROI</li><li>Put a ROI in a signal/artefact free zone and measure the standard deviation <img src="noise_script_eq00648687386987049082.png" alt="$\sigma_r$" style="width:10px;height:7px;"></li><li>Calculate the gaussian standard <img src="noise_script_eq12708923657795990387.png" alt="$\sigma_g$" style="width:10px;height:8px;"> deviation with the following equation :</li></ul></div><p><img src="noise_script_eq14448258001887236788.png" alt="$\langle m_{Mag} \rangle  = \sigma_g \sqrt{\frac{\pi}{2}} \frac{(2 L-1)!!}{2^{L-1}(L-1)!}$" style="width:118px;height:18px;"></p><p><b>or</b></p><p><img src="noise_script_eq06902913074341053533.png" alt="$\sigma_{Mag} = \sqrt{2 L \sigma_g^2 -\langle m_{Mag} \rangle ^2}= \sigma_g \sqrt{2L - \frac{\pi}{2} \Big(\frac{(2L-1)!!}{2^{L-1}(L-1)!}\Big)^2}$" style="width:255px;height:27px;"></p><h2>Conclusion<a name="40"></a></h2><p>It is important to understand how noise work in MRI for :</p><div><ul><li>Comparison of CNR / SNR (optimisation protocol, sequence...)</li><li>Measuring quantitative parameters. Example T2 measurement, baseline finish in noise</li><li>Denoising algorithm</li><li>Optimize reconstruction algorithm (parallel imaging, compressed-sensing...)</li></ul></div><p>Multiple method can be used to measure the noise standard deviation :</p><div><ul><li>ROI based method (presented here)</li><li>Histogram methods</li><li>SNR unit</li><li>Pseudo_replicas</li></ul></div><p><b>Remark</b> noise value can be modified with advanced reconstruction methods. For example in parallel imaging noise standard deviation became dependent of the position (see g-factor map). In that case using a <b>Pseudo-replica method</b> is an easy alternative.</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+
+%% Observe noise distributioin in one channel
+% Noise Data has been acquired on a phantom (RF off, ADC ON)
+% 
+% Size of the noise dataset is : 16384 x 4 coils
+%
+% Data are separated in real, imaginary and magnitude.
+close all;clear all;
+load('../data/noise_data.mat');
+
+noise_r=real(noise);
+noise_i=imag(noise);
+noise_m=abs(noise);
+%% 
+% Distribution (histogram) of real/imaginary part of noise is fitted using 
+% builtin matlab function : fitdist() and assuming it is a normal
+% distribution :
+%
+% $f(x) = \frac{1}{\sigma_g \sqrt{2 \pi}} e^{-\frac{1}{2}(\frac{x-\mu}{\sigma_g})^2}$
+
+LimMin=max(noise_r(:,1));  % limit the range of the plot
+
+% Plot the distribution of noise real part. 
+figure;h1=histogram(noise_r(:,1),50);title('real part of noise');
+xlim([-LimMin LimMin]) 
+
+% Estimate the standard deviation of noise (assuming it is a
+% gaussian/normal distribution)
+pd_r = fitdist(noise_r(:,1),'Normal');
+
+% Plot the fitted distribution and visualy compare.
+
+x_values = pd_r.mu-4*pd_r.sigma:8*pd_r.sigma/1000:pd_r.mu+4*pd_r.sigma; 
+%y = pdf(pd,x_values); % integrated matlab function to create a normal distribution
+y=1/(pd_r.sigma*sqrt(2*pi))*exp(-1/2*((x_values-pd_r.mu)/pd_r.sigma).^2); % own implementation of normal distribution
+y=y/max(y); y=y*max(h1.Values);
+hold on;
+plot(x_values,y,'LineWidth',2)
+
+%%
+% Real part of the complex data seems to follow a gaussian distribution
+% with a standard deviation $\sigma_g$
+
+ fprintf(1,'Standard deviation of real part: %f\n',pd_r.sigma);
+
+%% 
+% *Same observation for imaginary part*
+
+figure;h2=histogram(noise_i(:,1),50);title('imaginary part of noise');
+xlim([-LimMin LimMin]);
+
+pd_i = fitdist(noise_i(:,1),'Normal');
+x_values = pd_i.mu-4*pd_i.sigma:8*pd_i.sigma/1000:pd_i.mu+4*pd_i.sigma;
+y=1/(pd_i.sigma*sqrt(2*pi))*exp(-1/2*((x_values-pd_i.mu)/pd_i.sigma).^2);
+
+y=y/max(y); y=y*max(h2.Values);
+hold on
+plot(x_values,y,'LineWidth',2)
+
+%%%
+% Imaginary part of the complex data also seems to follow a gaussian distribution
+% with a standard deviation $\sigma_g$ which the "same" as the one measure
+% on real part of noise
+
+ fprintf(1,'Standard deviation of imaginary part: %f\n',pd_i.sigma);
+
+%%
+% But what happens to the distribution for the magnitude noise ?
+
+figure;h3=histogram(noise_m,50);title('Magnitude noise');
+xlim([-LimMin LimMin]);
+
+%%
+% The distribution is *not anymore gaussian*
+
+%% Theoritical distribution of magnitude noise
+% This is not a gaussian distribution indeed it is a Rayleigh distribution
+% when a coil with *one channel* is used
+% :
+% $f(x)=\frac{x}{\sigma_{g}^2}\exp{\Big(-\frac{x^2}{2 \sigma_{g}^2} \Big)}$
+%
+% Mathematical description :?
+% <https://onlinelibrary.wiley.com/doi/abs/10.1002/cmr.a.20124 Cardenas Blanco et Al>
+%
+% Ideal magnitude signal / pixel intensity is : 
+% $\| \vec{I} \| = \sqrt{I_{Re}^2+I_{Im}^2}$
+%%%
+% <<image/Rayleigh_1.png>>
+%%%
+% With noise we add and incertitude of the position into the complex plan :
+% $\| \vec{I_n} \| = \sqrt{(I_{Re}+n_r)^2+(I_{Im}+n_i)^2}$
+%%%
+% <<image/Rayleigh_2.png>>
+
+%%%
+% Distribution of signal is equal to the probability of occurence of an
+% intensity value at a distance $\| \vec{I} \| + \delta I$
+%%%
+% <<image/Rayleigh_3.png>>
+
+%%%
+% If the Signal-to-Noise Ratio is $ +\infty$, curvature is negligeable and the integral
+% of the function (the distribution) in function of the Intensity of the
+% signal $\| \vec{I} \|$ is a gaussian
+%%%
+% <<image/Rayleigh_4.png>>
+
+%%%
+% When $\| \vec{I} \|$ decrease, the curvature will modify this gaussian
+% distribution.
+%%%
+% <<image/Rayleigh_6.png>>
+
+%%%
+% The distribution is a Rician distribution : 
+%
+% $P_m(m|A,\sigma_g)=\frac{m}{\sigma_g^2}\exp \Big[-\frac{(A^2+m^2)}{2 \sigma_g^2} \Big]I_0 \Big(\frac{Am}{\sigma_g^2}\Big)H(m)$
+% where $I_n$ is the noisy signal measured, $I$ is the "real" signal and
+% $I_0(x) is the first order modified Bessel function.
+
+%%%
+% This distribution can be approximate to a gaussian distribution when
+% $\frac{I}{\sigma_g}$ is high :
+%
+% $P_m(m|A,\sigma_g) \approx \frac{1}{\sigma_g\sqrt{2 \pi}}\exp \Big[-\frac{(m-\sqrt{A^2+\sigma_g^2})^2}{2 \sigma_g^2} \Big]H(m)$
+%
+% and a Rayleigh distribution when SNR = 0 :
+%
+% $P_m(m,\sigma_g)=\frac{m}{\sigma^2}\exp \Big[-\frac{m^2}{2 \sigma_g^2} \Big]H(m)$
+%
+% with :
+
+%%%
+% * $m$ : the magnitude intensity of pixel measured 
+% * $A$ : the magnitude of the true noiseless pixel signal
+%% Properties of Rayleigh distribution
+% $P_m(m,\sigma_g)=\frac{m}{\sigma_g^2}\exp \Big[-\frac{m^2}{2 \sigma_g^2} \Big]H(m)$
+%
+% Standard deviation of a Rayleigh distribution $\sigma_{Ray}$ is linked to
+% the gaussian standard deviation of noise $\sigma_g$ on the real/imaginary
+% part of signal :
+%
+% $\sigma _{Ray} = \sigma_g \sqrt{2-\frac{\pi}{2}}= \sigma_g \times 0.6551$
+%
+% The mean value of magnitude noise signal is also linked to $\sigma_g$ :
+%
+% $\langle m \rangle _{Ray} = \sigma_g \sqrt{\frac{\pi}{2}} = \sigma_g
+% \times 1.2533$
+%
+% *Verification that the magnitude noise follow a Rayleigh distribution*
+
+fprintf(1,'Standard deviation of magnitude part: %f\n',std(noise_m(:,1)));
+
+%%
+% The standard deviation on magnitude data are underestimate in comparison to the
+% noise deviation measured on real/imaginary noise.
+%
+% We recover the same value of standard deviation of gaussian noise with the previous equation :
+%
+fprintf(1,'Standard deviation of gaussian noise on real noise: %f\n',std(noise_r(:,1)));
+fprintf(1,'Standard deviation of gaussian noise on imag noise: %f\n',std(noise_i(:,1)));
+fprintf(1,'Standard deviation of gaussian noise with mean magnitude noise : %f\n',mean(noise_m(:,1))/1.2533);
+fprintf(1,'Standard deviation of gaussian noise with standard deviation of magnitude noise : %f\n',std(noise_m(:,1))/0.6551);
+
+
+%% 
+% We can use the gaussian standard deviation calculated in order to fit the
+% distribution and measure the RMSE
+pd.sigma = mean(noise_m(:,1))/1.2533;
+
+figure;
+h3=histogram(noise_m,50);title('Magnitude noise');
+xlim([-LimMin LimMin]);
+
+x=0:LimMin/1000:LimMin;
+y=x./pd.sigma^2.*exp(-x.^2/(2*pd.sigma^2));
+y=y/max(y); y=y*max(h3.Values);
+hold on
+plot(x,y,'LineWidth',2)
+
+%% Simulate the rician distribution
+% for multiple value for SNR = [0 1 3 8]
+
+SNR= [0 1 3 8];
+
+x_values=0:0.01:1.4;
+%x_values=-1:0.01:1;
+pd.sigma = 0.1;
+pd.mu=0;
+
+figure;hold on;
+for i=1:length(SNR)
+A=SNR(i)*pd.sigma;
+
+yfilt=ones(length(x_values),1);
+yfilt(x_values<0)=0;
+
+y=x_values./((pd.sigma)^2).*exp(-(A^2+x_values.^2)./(2*(pd.sigma)^2)).*besseli(0,A.*x_values/(pd.sigma^2)).*yfilt';
+%y2=x_values./pd.sigma^2.*exp(-(A^2+x_values.^2)/(2*pd.sigma^2)).*besseli(0,A.*x_values/
+y_gauss=1/(pd.sigma*sqrt(2*pi))*exp(-1/2*((x_values-A)/pd.sigma).^2);
+plot(x_values,y,'LineWidth',2); %hold on; plot(x_values,y_gauss);
+
+labels{i} = ['SNR = ' num2str(SNR(i))];
+end
+legend(labels)
+
+%% Noise distribution with multiple elements array coil
+% Same theoritical analysis can be performed when multiple channel are used
+% either with a sum of square reconstruction or a sense-based coil
+% combinaison reconstruction.
+%
+% Mathematical description can be find in 
+% <https://onlinelibrary.wiley.com/doi/abs/10.1002/mrm.1910380524 ?Constantinides et Al>
+%
+% The noise distribution of L-elements array coil follow a non-central chi
+% distribution in function of the true noiseless signal $A_L$ :
+%
+% $P_m(m_L,|A_L,\sigma_g)=\frac{A_L}{\sigma_g^2}
+% \Big(\frac{m_L}{A_L}\Big)^L
+% \exp \Big[-\frac{(A_L^2+m_L^2)}{2 \sigma_g^2} \Big]I_{L-1} \Big(\frac{m_L \ A_L}{\sigma_g^2}\Big)H(m_L)%
+%
+% with :
+%%%
+% * $I_{L_1}$ : modified Bessel function of the first kind of order (L-1)
+% * $A_L$ : sum of square of signal
+% * $L$ : number of channel
+
+%%%
+% For the case of SNR = 0, we can perform a Taylor expansion of the bessel
+% function :
+%
+% $I_{L-1} \Big(\frac{m_L \ A_L}{\sigma_g^2}\Big) \approx
+% \frac{1}{2^{(L-1)}(L-1)!}\Big(\frac{m_L \ A_L}{\sigma_g^2}\Big)^{L-1}$
+%
+% which leads to the noise distribution : 
+%
+% $P_m(m_L,|0,\sigma_g)=\frac{m_L^{2L-1}}{2^{L-1} \ \sigma_g^{2L}\  (L-1)!}
+% \exp \Big[-\frac{m_L^2}{2 \sigma_g^2} \Big]H(m_L)$
+
+
+%% Properties of the non-central chi distribution
+% The gaussian standard deviation of noise can be estimated from magnitude
+% images with the following equation :
+%%%
+% * $\langle m_{Mag} \rangle  = \sigma_g \sqrt{\frac{\pi}{2}} \frac{(2 L
+% -1)!!}{2^{L-1}(L-1)!}$
+% * $\sigma_{Mag} = \sqrt{2 L \sigma_g^2 -\langle m_{Mag} \rangle ^2}= \sigma_g \sqrt{2L - \frac{\pi}{2} \Big(\frac{(2L-1)!!}{2^{L-1}(L-1)!}\Big)^2}$
+
+%%%
+% *Verification that the magnitude noise follow a non-central chi distribution*
+pd.sigma = std(noise_i(:,1));
+LimMin = 100000;
+figure;
+A=0;
+for i=1:4
+    dataMagMc=squeeze(sqrt(sum(abs(double(noise_m(:,1:i))).^2,2)));
+    subplot(4,1,i);h1=histogram(dataMagMc,50);title(['noise for ' num2str(i) ' channels']);
+    xlim([-LimMin LimMin]);
+    
+    x=0:LimMin/1000:LimMin;
+    
+    % Taylor
+    y=(x.^(2*i-1))./(2^(i-1)*pd.sigma^(2*i)*factorial(i-1)).*exp(-(x.^2)./(2*pd.sigma^2));
+    y=y/max(y); y=y*max(h1.Values);
+    hold on
+    plot(x,y,'REPLACE_WITH_DASH_DASH','LineWidth',2);
+end
+
+%%
+% Fit is *not as good* as what we saw with only one channel 
+RMSE = 0;
+clear Idx
+for i=1:h1.NumBins
+   %find center of histogram bin
+   xpos(i)=(h1.BinEdges(i)+h1.BinWidth);
+   
+   % find corresponding x2pos
+   [a,b]=find(x>=xpos(i),1,'first');
+   if(isempty(b))
+        Idx(i)=length(x);
+   else
+      Idx(i)=b; 
+   end
+   
+   RMSE =  RMSE+abs(h1.Values(i)-y(Idx(i)))^2;
+end
+RMSE=sqrt(RMSE);
+disp(['RMSE = ' num2str(RMSE)]);
+
+%%
+% This is due to the noise correlation between the different channel. 
+%
+% We can correct that by noise pre-whitening
+
+
+noise=noise';
+
+Nsamples=size(noise,2);
+
+Psi = (1/(Nsamples-1))*(noise * noise');
+figure;imagesc(abs(Psi));title('noise correlation matrix');
+%%%
+% 
+%%
+
+L=chol(Psi,'lower');
+L_inv=inv(L);
+
+noise=L_inv*noise;
+
+noise_r_p=real(noise)';
+noise_i_p=imag(noise)';
+noise_m_p=abs(noise)';
+
+%%
+% *Now refit the distribution with noise pre-whitening data*
+pd.sigma = std(noise_i_p(:,1));
+LimMin = max(noise_i_p(:));
+figure;
+A=0;
+for i=1:4
+    dataMagMc=squeeze(sqrt(sum(abs(double(noise_m_p(:,1:i))).^2,2)));
+    subplot(4,1,i);h1=histogram(dataMagMc,50);title(['noise for ' num2str(i) ' channels']);
+    xlim([-LimMin LimMin]);
+    
+    x=0:LimMin/1000:LimMin;
+    
+    % Taylor
+    y=(x.^(2*i-1))./(2^(i-1)*pd.sigma^(2*i)*factorial(i-1)).*exp(-(x.^2)./(2*pd.sigma^2));
+    y=y/max(y); y=y*max(h1.Values);
+    hold on
+    plot(x,y,'REPLACE_WITH_DASH_DASH','LineWidth',2);
+end
+
+%%
+% *Now the fit of the noise distribution is really good*
+RMSE = 0;
+clear Idx
+for i=1:h1.NumBins
+   %find center of histogram bin
+   xpos(i)=(h1.BinEdges(i)+h1.BinWidth);
+   
+   % find corresponding x2pos
+   [a,b]=find(x>=xpos(i),1,'first');
+   if(isempty(b))
+        Idx(i)=length(x);
+   else
+      Idx(i)=b; 
+   end
+   
+   RMSE =  RMSE+abs(h1.Values(i)-y(Idx(i)))^2;
+end
+RMSE=sqrt(RMSE);
+disp(['RMSE = ' num2str(RMSE)]);
+
+%%  How to measure SNR (ROI method)
+% If you want to measure the SNR with a *Region of interest (ROI)* based method on magnitude
+% image you should calculate the ratio :
+%
+% $SNR = \frac{Signal}{\sigma_g}$
+
+%%%
+% * Correct the noise correlation between channels (noise pre-whitening)
+% * Take into account the number of coil used
+% * Measure the signal with a ROI
+% * Put a ROI in a signal/artefact free zone and measure the standard
+% deviation $\sigma_r$
+% * Calculate the gaussian standard $\sigma_g$ deviation with the following equation :
+%%%
+% $\langle m_{Mag} \rangle  = \sigma_g \sqrt{\frac{\pi}{2}} \frac{(2
+% L-1)!!}{2^{L-1}(L-1)!}$ 
+%
+% *or*
+%
+% $\sigma_{Mag} = \sqrt{2 L \sigma_g^2 -\langle m_{Mag} \rangle ^2}= \sigma_g \sqrt{2L - \frac{\pi}{2} \Big(\frac{(2L-1)!!}{2^{L-1}(L-1)!}\Big)^2}$
+
+%% Conclusion
+% It is important to understand how noise work in MRI for :
+%%%
+% * Comparison of CNR / SNR (optimisation protocol, sequence...)
+% * Measuring quantitative parameters. Example T2 measurement, baseline
+% finish in noise
+% * Denoising algorithm
+% * Optimize reconstruction algorithm (parallel imaging,
+% compressed-sensing...)
+%
+% Multiple method can be used to measure the noise standard deviation :
+%%%
+% * ROI based method (presented here)
+% * Histogram methods
+% * SNR unit
+% * Pseudo_replicas
+
+%%%
+% *Remark* noise value can be modified with advanced reconstruction
+% methods. For example in parallel imaging noise standard deviation became
+% dependent of the position (see g-factor map). In that case using a
+% *Pseudo-replica method* is an easy alternative.
+
+##### SOURCE END #####
+--></body></html>
