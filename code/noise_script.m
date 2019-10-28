@@ -314,7 +314,9 @@ noise_m_p=abs(noise)';
 
 %%
 % *Now refit the distribution with noise pre-whitening data*
-pd.sigma = std(noise_i_p(:,1));
+pd.sigma = std(noise_i_p(:,1))
+pd.sigma= sqrt(mean(dataMagMc.^2)/(2*4)) % Method mean square root
+pd.sigma= mean(dataMagMc)/2.74 % Method mean 
 LimMin = max(noise_i_p(:));
 figure;
 A=0;
